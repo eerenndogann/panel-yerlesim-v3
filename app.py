@@ -7,19 +7,17 @@ import io
 from fpdf import FPDF
 import tempfile
 
-# Sayfa ayarı
 st.set_page_config(page_title="Panel ve Alan Yerleşim Hesaplayıcı", layout="centered")
 
-# Görseli base64'e çevirme
+# Base64 dönüştürücü
 def image_to_base64(path):
     with open(path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
-# Logoları yükle
+# Logolar
 logo1_b64 = image_to_base64("logo_beyaz_nobg.png")
 logo2_b64 = image_to_base64("SPUTEK_isim.png")
 
-# Logo ve başlık
 st.markdown(
     f"""
     <div style="display: flex; justify-content: center; margin-bottom: 20px;">
@@ -76,13 +74,12 @@ toplam_hucre = satir * sutun
 panel_grubu_gucu_wp = toplam_hucre * hucre_guc
 panel_grubu_gucu_kwp = panel_grubu_gucu_wp / 1000
 
-st.success(f"📐 Hücre Grubu Boyutu (kenarlı çerçeve ile):")
+st.success("📐 Hücre Grubu Boyutu (kenarlı çerçeve ile):")
 st.markdown(f"- Genişlik: **{cati_en:.3f} m**")
 st.markdown(f"- Yükseklik: **{cati_boy:.3f} m**")
+st.success(f"🔋 Toplam Güç: {toplam_hucre} hücre × {hucre_guc:.3f} Wp = **{panel_grubu_gucu_wp:.1f} Wp** ({panel_grubu_gucu_kwp:.2f} kWp)")
 
-st.success(f"🔋 Toplam Güç (1 Hücre Grubu): {toplam_hucre} hücre × {hucre_guc:.3f} Wp = **{panel_grubu_gucu_wp:.1f} Wp** ({panel_grubu_gucu_kwp:.2f} kWp)")
-
-# Görsel çizim 1
+# Görsel 1
 fig1, ax1 = plt.subplots()
 ax1.set_xlim(0, cati_en)
 ax1.set_ylim(0, cati_boy)
@@ -121,13 +118,12 @@ sistem_toplam_guc_kwp = sistem_toplam_guc_wp / 1000
 
 st.success(f"🧮 Bu alana {adet_x} x {adet_y} = **{toplam_grup} adet panel grubu** sığar.")
 
-# Görsel çizim 2
+# Görsel 2
 fig2, ax2 = plt.subplots()
 ax2.set_xlim(0, verilen_genislik)
 ax2.set_ylim(0, verilen_yukseklik)
 ax2.set_aspect('equal')
-ax2.set_title(" Alana Panel Grubu Yerleşimi (boşluksuz)")
-
+ax2.set_title("Alana Panel Grubu Yerleşimi (boşluksuz)")
 for i in range(adet_x):
     for j in range(adet_y):
         x = i * grup_en
@@ -136,7 +132,7 @@ for i in range(adet_x):
 
 st.pyplot(fig2)
 
-# Güç özeti
+# Güç Özeti
 st.markdown("---")
 st.markdown(
     f"""
@@ -151,7 +147,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# PDF için figürleri geçici dosyaya kaydet
+# Geçici görseller
 with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp1:
     fig1.savefig(tmp1.name, format="png")
     fig1_path = tmp1.name
@@ -160,7 +156,7 @@ with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp2:
     fig2.savefig(tmp2.name, format="png")
     fig2_path = tmp2.name
 
-# PDF oluştur
+# PDF Oluştur
 pdf = FPDF()
 pdf.add_page()
 pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
@@ -184,12 +180,14 @@ pdf.image(fig1_path, x=10, w=180)
 pdf.add_page()
 pdf.image(fig2_path, x=10, w=180)
 
-# PDF çıktısını base64 ile indirilebilir hale getir
+# PDF butonu
 pdf_bytes = pdf.output(dest='S').encode('latin1')
-pdf_output = io.BytesIO(pdf_bytes)
-b64_pdf = base64.b64encode(pdf_output.read()).decode('utf-8')
-href = f'<a href="data:application/pdf;base64,{b64_pdf}" download="yerlesim_raporu.pdf">📄 PDF olarak indir</a>'
-st.markdown(href, unsafe_allow_html=True)
+st.download_button(
+    label="📄 PDF olarak indir",
+    data=pdf_bytes,
+    file_name="yerlesim_raporu.pdf",
+    mime="application/pdf"
+)
 
 # Alt Bilgi
 st.markdown("---")
